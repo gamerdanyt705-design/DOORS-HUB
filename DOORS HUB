@@ -1,11 +1,34 @@
 -- DOORS HUB v1.7 FINAL
--- Система ключа доступа + Исправленные трекеры + МОЩНЕЙШИЙ АНТИЧИТ
+-- Мультиключевая система + Исправленные трекеры + МОЩНЕЙШИЙ АНТИЧИТ
 
 -- ═══════════════════════════════════════════════════════════
--- СИСТЕМА АВТОРИЗАЦИИ
+-- СИСТЕМА АВТОРИЗАЦИИ (МУЛЬТИКЛЮЧ)
 -- ═══════════════════════════════════════════════════════════
 
-local VALID_KEY = "Lernix" -- Ключ доступа
+local VALID_KEYS = {
+    "Lernix",
+    "Zx789b45",
+    "Qw236h11",
+    "As567d89",
+    "Fg987h42",
+    "Lk345b66",
+    "Jh654d98",
+    "Mq234b77",
+    "Ws896h55",
+    "Xc567d22",
+    "Vb987h11",
+    "Nt345b88",
+    "Yh654d33",
+    "Bm234b66",
+    "Rf987h22",
+    "Gk567d11",
+    "Pl345b99",
+    "Tj654d88",
+    "Uy234b77",
+    "Kx896h55",
+    "Zs567d22"
+}
+
 local KeyEntered = false
 
 local Players = game:GetService("Players")
@@ -16,6 +39,16 @@ local CoreGui = game:GetService("CoreGui")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
+
+-- Функция проверки ключа
+local function IsValidKey(key)
+    for _, validKey in ipairs(VALID_KEYS) do
+        if key == validKey then
+            return true
+        end
+    end
+    return false
+end
 
 -- Функция создания окна ввода ключа
 local function CreateKeySystem()
@@ -49,8 +82,8 @@ local function CreateKeySystem()
     
     -- Главное окно
     local KeyFrame = Instance.new("Frame")
-    KeyFrame.Size = UDim2.new(0, 400, 0, 300)
-    KeyFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+    KeyFrame.Size = UDim2.new(0, 400, 0, 320)
+    KeyFrame.Position = UDim2.new(0.5, -200, 0.5, -160)
     KeyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     KeyFrame.BorderSizePixel = 0
     KeyFrame.Parent = KeyGUI
@@ -152,26 +185,27 @@ local function CreateKeySystem()
     
     -- Статус
     local StatusLabel = Instance.new("TextLabel")
-    StatusLabel.Size = UDim2.new(1, -40, 0, 20)
-    StatusLabel.Position = UDim2.new(0, 20, 1, -30)
+    StatusLabel.Size = UDim2.new(1, -40, 0, 30)
+    StatusLabel.Position = UDim2.new(0, 20, 1, -40)
     StatusLabel.BackgroundTransparency = 1
     StatusLabel.Text = ""
     StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
     StatusLabel.Font = Enum.Font.Gotham
     StatusLabel.TextSize = 12
+    StatusLabel.TextWrapped = true
     StatusLabel.Parent = KeyFrame
     
     -- Анимация появления
     KeyFrame.Size = UDim2.new(0, 0, 0, 0)
     TweenService:Create(KeyFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
-        Size = UDim2.new(0, 400, 0, 300)
+        Size = UDim2.new(0, 400, 0, 320)
     }):Play()
     
     -- Функция проверки ключа
     local function CheckKey()
         local enteredKey = KeyBox.Text
         
-        if enteredKey == VALID_KEY then
+        if IsValidKey(enteredKey) then
             -- Правильный ключ
             StatusLabel.Text = "✅ Ключ верный! Загрузка..."
             StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 100)
@@ -259,18 +293,18 @@ repeat wait(0.1) until KeyEntered
 local AntiCheat = {
     Enabled = true,
     Settings = {
-        MaxSpeed = 22,              -- Максимальная безопасная скорость
-        SmoothTransition = true,    -- Плавное изменение
-        TransitionSpeed = 0.15,     -- Скорость плавности
-        RandomVariation = true,     -- Случайные вариации
-        VariationRange = 0.3,       -- Диапазон вариаций
-        PulseEffect = true,         -- Пульсирующий эффект
-        PulseInterval = 2,          -- Интервал пульсаций
-        HumanLikeMovement = true,   -- Человекоподобное движение
-        DetectionAvoidance = true,  -- Избегание детектирования
-        SafetyMargin = 1.5,         -- Запас безопасности
-        AdaptiveSpeed = true,       -- Адаптивная скорость
-        StealthMode = true          -- Режим скрытности
+        MaxSpeed = 22,
+        SmoothTransition = true,
+        TransitionSpeed = 0.15,
+        RandomVariation = true,
+        VariationRange = 0.3,
+        PulseEffect = true,
+        PulseInterval = 2,
+        HumanLikeMovement = true,
+        DetectionAvoidance = true,
+        SafetyMargin = 1.5,
+        AdaptiveSpeed = true,
+        StealthMode = true
     },
     Data = {
         BaseSpeed = 16,
@@ -319,7 +353,7 @@ function AntiCheat:CalculateSafeSpeed(desiredSpeed)
         end
     end
     
-    -- Режим скрытности - дополнительные ограничения
+    -- Режим скрытности
     if self.Settings.StealthMode then
         safeSpeed = math.min(safeSpeed, self.Settings.MaxSpeed - self.Settings.SafetyMargin)
     end
@@ -443,7 +477,7 @@ function AntiCheat:Reset()
 end
 
 -- ═══════════════════════════════════════════════════════════
--- ОСНОВНОЙ СКРИПТ (загружается после ввода ключа)
+-- ОСНОВНОЙ СКРИПТ
 -- ═══════════════════════════════════════════════════════════
 
 -- Проверка Drawing API
@@ -494,7 +528,7 @@ local Config = {
     Speed = {
         Enabled = false,
         Value = 20,
-        UseAntiCheat = true  -- НОВОЕ: использовать античит
+        UseAntiCheat = true
     },
     GodMode = {
         Enabled = false
@@ -904,13 +938,13 @@ end
 
 -- Обновление ESP
 function ESP:Update()
-    if not Config.ESP.Enabled then 
+    if not Config.ESP.Enabled then
         for _, tracer in pairs(self.Tracers) do
             pcall(function()
                 tracer.Visible = false
             end)
         end
-        return 
+        return
     end
     
     local character = LocalPlayer.Character
@@ -1170,7 +1204,7 @@ function GodMode:Disable()
     GodMode.Connections = {}
 end
 
--- НОВАЯ СИСТЕМА СКОРОСТИ С АНТИЧИТОМ
+-- СИСТЕМА СКОРОСТИ С АНТИЧИТОМ
 local SpeedSystem = {}
 SpeedSystem.Connection = nil
 
@@ -1198,7 +1232,6 @@ function SpeedSystem:Enable()
             if Config.Speed.UseAntiCheat then
                 AntiCheat:Update()
             else
-                -- Обычный режим без античита
                 local character = LocalPlayer.Character
                 if not character then return end
                 
@@ -1392,9 +1425,9 @@ task.spawn(function()
     while wait(0.5) do
         if AntiCheat.Enabled and Config.Speed.Enabled then
             local safetyLevel = math.floor((1 - AntiCheat.Data.DetectionLevel) * 100)
-            local statusColor = safetyLevel > 70 and Color3.fromRGB(0, 255, 100) or 
-                               safetyLevel > 40 and Color3.fromRGB(255, 200, 0) or 
-                               Color3.fromRGB(255, 100, 100)
+            local statusColor = safetyLevel > 70 and Color3.fromRGB(0, 255, 100) or
+                                safetyLevel > 40 and Color3.fromRGB(255, 200, 0) or
+                                Color3.fromRGB(255, 100, 100)
             
             AntiCheatStatus.Text = string.format("🛡️ Античит: Активен | Скорость: %.1f | Безопасность: %d%%", 
                 AntiCheat.Data.CurrentSpeed, safetyLevel)
@@ -1999,7 +2032,7 @@ game:GetService("StarterGui"):SetCore("SendNotification", {
 
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 print("✅ DOORS HUB v1.7 - ПОЛНОСТЬЮ ЗАГРУЖЕН")
-print("🔐 Ключ: Lernix")
+print("🔐 21 рабочих ключей активировано")
 print("🛡️ МОЩНЕЙШИЙ АНТИЧИТ АКТИВИРОВАН!")
 print("📍 Трекеры работают!")
 print("🚪 Оптимизация активна")
