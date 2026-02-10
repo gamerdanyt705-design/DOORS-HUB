@@ -1,5 +1,25 @@
 -- DOORS HUB v1.7 FINAL
--- Мультиключевая система + Исправленные трекеры + МОЩНЕЙШИЙ АНТИЧИТ
+-- Мультиключевая система + Исправленные трекеры + МОЩНЕЙШИЙ АНТИЧИТ + ЗОЛОТО + DISCORD
+
+-- ═══════════════════════════════════════════════════════════
+-- АВТОКОПИРОВАНИЕ DISCORD ССЫЛКИ
+-- ═══════════════════════════════════════════════════════════
+
+local discordLink = "https://discord.gg/hRgCerFYnV"
+
+-- Копируем ссылку в буфер обмена
+pcall(function()
+    setclipboard(discordLink)
+end)
+
+-- Отправляем уведомление
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "💬 DISCORD";
+    Text = "Зайди в Discord канал! Ссылка скопирована.";
+    Duration = 7;
+})
+
+wait(1)
 
 -- ═══════════════════════════════════════════════════════════
 -- СИСТЕМА АВТОРИЗАЦИИ (МУЛЬТИКЛЮЧ)
@@ -82,8 +102,8 @@ local function CreateKeySystem()
     
     -- Главное окно
     local KeyFrame = Instance.new("Frame")
-    KeyFrame.Size = UDim2.new(0, 400, 0, 320)
-    KeyFrame.Position = UDim2.new(0.5, -200, 0.5, -160)
+    KeyFrame.Size = UDim2.new(0, 400, 0, 380)
+    KeyFrame.Position = UDim2.new(0.5, -200, 0.5, -190)
     KeyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
     KeyFrame.BorderSizePixel = 0
     KeyFrame.Parent = KeyGUI
@@ -131,10 +151,35 @@ local function CreateKeySystem()
     TitleGradient.Rotation = 90
     TitleGradient.Parent = TitleLabel
     
+    -- Discord кнопка
+    local DiscordButton = Instance.new("TextButton")
+    DiscordButton.Size = UDim2.new(1, -60, 0, 45)
+    DiscordButton.Position = UDim2.new(0, 30, 0, 80)
+    DiscordButton.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+    DiscordButton.Text = "💬 Discord (Ссылка скопирована)"
+    DiscordButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    DiscordButton.Font = Enum.Font.GothamBold
+    DiscordButton.TextSize = 14
+    DiscordButton.BorderSizePixel = 0
+    DiscordButton.Parent = KeyFrame
+    
+    local DiscordCorner = Instance.new("UICorner")
+    DiscordCorner.CornerRadius = UDim.new(0, 10)
+    DiscordCorner.Parent = DiscordButton
+    
+    DiscordButton.MouseButton1Click:Connect(function()
+        pcall(function()
+            setclipboard(discordLink)
+        end)
+        DiscordButton.Text = "✅ Ссылка снова скопирована!"
+        wait(2)
+        DiscordButton.Text = "💬 Discord (Ссылка скопирована)"
+    end)
+    
     -- Информация
     local InfoLabel = Instance.new("TextLabel")
     InfoLabel.Size = UDim2.new(1, -40, 0, 60)
-    InfoLabel.Position = UDim2.new(0, 20, 0, 80)
+    InfoLabel.Position = UDim2.new(0, 20, 0, 140)
     InfoLabel.BackgroundTransparency = 1
     InfoLabel.Text = "Введите ключ доступа\nдля использования скрипта"
     InfoLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -146,7 +191,7 @@ local function CreateKeySystem()
     -- Поле ввода
     local KeyBox = Instance.new("TextBox")
     KeyBox.Size = UDim2.new(1, -60, 0, 45)
-    KeyBox.Position = UDim2.new(0, 30, 0, 150)
+    KeyBox.Position = UDim2.new(0, 30, 0, 210)
     KeyBox.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
     KeyBox.PlaceholderText = "Введите ключ..."
     KeyBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
@@ -170,7 +215,7 @@ local function CreateKeySystem()
     -- Кнопка подтверждения
     local SubmitButton = Instance.new("TextButton")
     SubmitButton.Size = UDim2.new(1, -60, 0, 45)
-    SubmitButton.Position = UDim2.new(0, 30, 0, 215)
+    SubmitButton.Position = UDim2.new(0, 30, 0, 275)
     SubmitButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
     SubmitButton.Text = "✓ Подтвердить"
     SubmitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -198,7 +243,7 @@ local function CreateKeySystem()
     -- Анимация появления
     KeyFrame.Size = UDim2.new(0, 0, 0, 0)
     TweenService:Create(KeyFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
-        Size = UDim2.new(0, 400, 0, 320)
+        Size = UDim2.new(0, 400, 0, 380)
     }):Play()
     
     -- Функция проверки ключа
@@ -275,6 +320,18 @@ local function CreateKeySystem()
         }):Play()
     end)
     
+    DiscordButton.MouseEnter:Connect(function()
+        TweenService:Create(DiscordButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(98, 111, 252)
+        }):Play()
+    end)
+    
+    DiscordButton.MouseLeave:Connect(function()
+        TweenService:Create(DiscordButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+        }):Play()
+    end)
+    
     -- Автофокус на поле ввода
     wait(0.5)
     KeyBox:CaptureFocus()
@@ -319,17 +376,14 @@ local AntiCheat = {
     }
 }
 
--- Функция расчета безопасной скорости
 function AntiCheat:CalculateSafeSpeed(desiredSpeed)
     local safeSpeed = math.min(desiredSpeed, self.Settings.MaxSpeed)
     
-    -- Добавление случайной вариации
     if self.Settings.RandomVariation then
         local variation = (math.random() - 0.5) * 2 * self.Settings.VariationRange
         safeSpeed = safeSpeed + variation
     end
     
-    -- Пульсирующий эффект
     if self.Settings.PulseEffect then
         if tick() - self.Data.LastPulse > self.Settings.PulseInterval then
             local pulse = math.sin(tick() * 2) * 0.5
@@ -338,13 +392,11 @@ function AntiCheat:CalculateSafeSpeed(desiredSpeed)
         end
     end
     
-    -- Человекоподобные колебания
     if self.Settings.HumanLikeMovement then
         local humanFactor = math.sin(tick() * 3.5) * 0.2 + math.cos(tick() * 1.7) * 0.15
         safeSpeed = safeSpeed + humanFactor
     end
     
-    -- Адаптивная коррекция
     if self.Settings.AdaptiveSpeed then
         local avgSpeed = self:GetAverageSpeed()
         if avgSpeed > 0 then
@@ -353,7 +405,6 @@ function AntiCheat:CalculateSafeSpeed(desiredSpeed)
         end
     end
     
-    -- Режим скрытности
     if self.Settings.StealthMode then
         safeSpeed = math.min(safeSpeed, self.Settings.MaxSpeed - self.Settings.SafetyMargin)
     end
@@ -361,7 +412,6 @@ function AntiCheat:CalculateSafeSpeed(desiredSpeed)
     return math.clamp(safeSpeed, self.Data.BaseSpeed, self.Settings.MaxSpeed)
 end
 
--- Получение средней скорости
 function AntiCheat:GetAverageSpeed()
     if #self.Data.SpeedHistory == 0 then return 0 end
     
@@ -373,7 +423,6 @@ function AntiCheat:GetAverageSpeed()
     return sum / #self.Data.SpeedHistory
 end
 
--- Добавление в историю
 function AntiCheat:AddToHistory(speed)
     table.insert(self.Data.SpeedHistory, speed)
     
@@ -382,7 +431,6 @@ function AntiCheat:AddToHistory(speed)
     end
 end
 
--- Плавное изменение скорости
 function AntiCheat:SmoothSpeed(current, target, delta)
     if not self.Settings.SmoothTransition then
         return target
@@ -394,7 +442,6 @@ function AntiCheat:SmoothSpeed(current, target, delta)
     return current + change
 end
 
--- Определение уровня детектирования
 function AntiCheat:UpdateDetectionLevel()
     local avgSpeed = self:GetAverageSpeed()
     
@@ -404,7 +451,6 @@ function AntiCheat:UpdateDetectionLevel()
         self.Data.DetectionLevel = math.max(self.Data.DetectionLevel - 0.05, 0)
     end
     
-    -- Автоматическая коррекция при высоком уровне детектирования
     if self.Settings.DetectionAvoidance and self.Data.DetectionLevel > 0.7 then
         self.Settings.MaxSpeed = math.max(self.Settings.MaxSpeed - 0.5, 18)
         
@@ -418,7 +464,6 @@ function AntiCheat:UpdateDetectionLevel()
     end
 end
 
--- Основная функция обновления
 function AntiCheat:Update()
     if not self.Enabled then return end
     
@@ -431,34 +476,27 @@ function AntiCheat:Update()
     local delta = tick() - self.Data.LastUpdate
     self.Data.LastUpdate = tick()
     
-    -- Расчет целевой скорости
     local desiredSpeed = self.Data.TargetSpeed
     local safeSpeed = self:CalculateSafeSpeed(desiredSpeed)
     
-    -- Плавное изменение
     self.Data.CurrentSpeed = self:SmoothSpeed(self.Data.CurrentSpeed, safeSpeed, delta)
     
-    -- Применение скорости
     if humanoid.WalkSpeed ~= self.Data.CurrentSpeed then
         humanoid.WalkSpeed = self.Data.CurrentSpeed
     end
     
-    -- Обновление истории
     self:AddToHistory(self.Data.CurrentSpeed)
     
-    -- Обновление уровня детектирования
     if tick() % 1 < delta then
         self:UpdateDetectionLevel()
     end
 end
 
--- Установка целевой скорости
 function AntiCheat:SetTargetSpeed(speed)
     self.Data.TargetSpeed = speed
     self.Data.IsRunning = speed > self.Data.BaseSpeed
 end
 
--- Сброс античита
 function AntiCheat:Reset()
     self.Data.CurrentSpeed = self.Data.BaseSpeed
     self.Data.TargetSpeed = self.Data.BaseSpeed
@@ -480,7 +518,6 @@ end
 -- ОСНОВНОЙ СКРИПТ
 -- ═══════════════════════════════════════════════════════════
 
--- Проверка Drawing API
 local DrawingSupported = false
 local DrawingAPI = nil
 
@@ -510,7 +547,6 @@ else
     print("✅ Drawing API загружен! Трекеры работают!")
 end
 
--- Конфигурация
 local Config = {
     ESP = {
         Enabled = true,
@@ -539,26 +575,31 @@ local Config = {
         Lever = Color3.fromRGB(255, 100, 255),
         Item = Color3.fromRGB(0, 191, 255),
         Entity = Color3.fromRGB(255, 0, 0),
-        Tracer = Color3.fromRGB(255, 255, 255)
+        Tracer = Color3.fromRGB(255, 255, 255),
+        Gold = Color3.fromRGB(255, 215, 0)
     }
 }
 
--- Список важных предметов
 local ImportantItems = {
-    ["Key"] = {Name = "Ключ", Color = Config.Colors.Key, Priority = 1},
-    ["KeyObtain"] = {Name = "Ключ", Color = Config.Colors.Key, Priority = 1},
-    ["Lockpick"] = {Name = "Отмычка", Color = Config.Colors.Item, Priority = 2},
-    ["Crucifix"] = {Name = "Крест", Color = Config.Colors.Item, Priority = 2},
-    ["Lighter"] = {Name = "Зажигалка", Color = Config.Colors.Item, Priority = 3},
-    ["FlashlightToggle"] = {Name = "Фонарик", Color = Config.Colors.Item, Priority = 3},
-    ["Battery"] = {Name = "Батарейка", Color = Config.Colors.Item, Priority = 4},
-    ["Vitamins"] = {Name = "Витамины", Color = Config.Colors.Item, Priority = 3},
-    ["SkeletonKey"] = {Name = "Скелет Ключ", Color = Config.Colors.Key, Priority = 1},
-    ["LibraryHintPaper"] = {Name = "Подсказка", Color = Config.Colors.Item, Priority = 2},
-    ["Shears"] = {Name = "Ножницы", Color = Config.Colors.Item, Priority = 2}
+    ["Key"] = {Name = "🔑 Ключ", Color = Config.Colors.Key, Priority = 1},
+    ["KeyObtain"] = {Name = "🔑 Ключ", Color = Config.Colors.Key, Priority = 1},
+    ["Lockpick"] = {Name = "🔓 Отмычка", Color = Config.Colors.Item, Priority = 2},
+    ["Crucifix"] = {Name = "✝️ Крест", Color = Config.Colors.Item, Priority = 2},
+    ["Lighter"] = {Name = "🔥 Зажигалка", Color = Config.Colors.Item, Priority = 3},
+    ["FlashlightToggle"] = {Name = "🔦 Фонарик", Color = Config.Colors.Item, Priority = 3},
+    ["Battery"] = {Name = "🔋 Батарейка", Color = Config.Colors.Item, Priority = 4},
+    ["Vitamins"] = {Name = "💊 Витамины", Color = Config.Colors.Item, Priority = 3},
+    ["SkeletonKey"] = {Name = "🗝️ Скелет Ключ", Color = Config.Colors.Key, Priority = 1},
+    ["LibraryHintPaper"] = {Name = "📜 Подсказка", Color = Config.Colors.Item, Priority = 2},
+    ["Shears"] = {Name = "✂️ Ножницы", Color = Config.Colors.Item, Priority = 2},
+    ["GoldPile"] = {Name = "💰 Золото", Color = Config.Colors.Gold, Priority = 1},
+    ["Gold"] = {Name = "💰 Золото", Color = Config.Colors.Gold, Priority = 1},
+    ["GoldCoin"] = {Name = "🪙 Золотая монета", Color = Config.Colors.Gold, Priority = 1},
+    ["Coin"] = {Name = "🪙 Монета", Color = Config.Colors.Gold, Priority = 2},
+    ["LootChest"] = {Name = "📦 Сундук с золотом", Color = Config.Colors.Gold, Priority = 1},
+    ["Treasure"] = {Name = "💎 Сокровище", Color = Config.Colors.Gold, Priority = 1}
 }
 
--- Список монстров
 local EntityNames = {
     ["RushMoving"] = "Rush",
     ["AmbushMoving"] = "Ambush",
@@ -577,7 +618,6 @@ local EntityNames = {
     ["A120"] = "A-120"
 }
 
--- ESP Класс
 local ESP = {}
 ESP.Objects = {}
 ESP.Connections = {}
@@ -586,12 +626,10 @@ ESP.DoorESP = {}
 ESP.CurrentPlayerRoom = 0
 ESP.LastCleanup = 0
 
--- Создание папки для ESP
 local ESPFolder = Instance.new("Folder")
 ESPFolder.Name = "ESPHolder"
 ESPFolder.Parent = Camera
 
--- Получение центра объекта
 local function GetCenter(obj)
     if obj:IsA("Model") then
         local cf, size = obj:GetBoundingBox()
@@ -604,7 +642,6 @@ local function GetCenter(obj)
     return nil
 end
 
--- Получение главной части
 local function GetPrimaryPart(obj)
     if obj:IsA("Model") then
         return obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
@@ -615,7 +652,6 @@ local function GetPrimaryPart(obj)
     end
 end
 
--- Получение текущей комнаты
 local function GetCurrentRoom()
     local character = LocalPlayer.Character
     if not character then return 0 end
@@ -652,7 +688,6 @@ local function GetCurrentRoom()
     return closestRoom
 end
 
--- Создание трекера
 local function CreateTracer(color)
     if not DrawingSupported or not DrawingAPI then return nil end
     
@@ -672,7 +707,42 @@ local function CreateTracer(color)
     end
 end
 
--- Создание ESP
+local function FindGoldInRoom(room)
+    local goldItems = {}
+    
+    local assets = room:FindFirstChild("Assets")
+    if assets then
+        for _, obj in pairs(assets:GetDescendants()) do
+            if obj.Name:find("Gold") or obj.Name:find("Coin") or 
+               obj.Name:find("Treasure") or obj.Name:find("Chest") or
+               obj.Name:find("Loot") then
+                table.insert(goldItems, obj)
+            end
+            
+            if obj:IsA("BasePart") then
+                local color = obj.Color
+                if (color.R > 0.7 and color.G > 0.5 and color.B < 0.3) then
+                    if obj.Name:find("Pile") or obj.Name:find("Stack") then
+                        table.insert(goldItems, obj)
+                    end
+                end
+            end
+        end
+    end
+    
+    for _, obj in pairs(room:GetDescendants()) do
+        if obj.Name:find("Gold") or obj.Name:find("Coin") or 
+           obj.Name:find("Treasure") or obj.Name:find("Chest") or
+           obj.Name:find("Loot") then
+            if not table.find(goldItems, obj) then
+                table.insert(goldItems, obj)
+            end
+        end
+    end
+    
+    return goldItems
+end
+
 function ESP:Add(instance, espType, customName, customColor)
     if not instance or self.Objects[instance] then return end
     
@@ -722,7 +792,6 @@ function ESP:Add(instance, espType, customName, customColor)
         local primaryPart = GetPrimaryPart(instance)
         if not primaryPart then return end
         
-        -- HIGHLIGHT
         if espType ~= "Door" or (espData.RoomNumber and math.abs(espData.RoomNumber - self.CurrentPlayerRoom) <= 2) then
             if espType == "Door" then
                 local doorPart = instance:FindFirstChild("Door") or instance:FindFirstChildWhichIsA("BasePart")
@@ -744,15 +813,19 @@ function ESP:Add(instance, espType, customName, customColor)
                 highlight.Adornee = instance
                 highlight.FillColor = color
                 highlight.OutlineColor = color
-                highlight.FillTransparency = espType == "Lever" and 0.4 or 0.5
-                highlight.OutlineTransparency = espType == "Lever" and 0.2 or 0.2
+                if espType == "Gold" then
+                    highlight.FillTransparency = 0.2
+                    highlight.OutlineTransparency = 0
+                else
+                    highlight.FillTransparency = espType == "Lever" and 0.4 or 0.5
+                    highlight.OutlineTransparency = espType == "Lever" and 0.2 or 0.2
+                end
                 highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                 highlight.Parent = ESPFolder
                 espData.Components.Highlight = highlight
             end
         end
         
-        -- BILLBOARD
         if espType ~= "Door" or (espData.RoomNumber and math.abs(espData.RoomNumber - self.CurrentPlayerRoom) <= Config.ESP.DoorRange) then
             local billboard = Instance.new("BillboardGui")
             billboard.Name = "ESP_Billboard"
@@ -770,7 +843,7 @@ function ESP:Add(instance, espType, customName, customColor)
             textLabel.TextStrokeTransparency = 0
             textLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
             textLabel.Font = Enum.Font.GothamBold
-            textLabel.TextSize = espType == "Door" and 14 or 16
+            textLabel.TextSize = espType == "Door" and 14 or (espType == "Gold" and 18 or 16)
             textLabel.Text = name
             textLabel.Parent = billboard
             
@@ -778,7 +851,6 @@ function ESP:Add(instance, espType, customName, customColor)
             espData.Components.TextLabel = textLabel
         end
         
-        -- TRACER
         if Config.ESP.Tracers and DrawingSupported then
             local tracer = CreateTracer(color)
             if tracer then
@@ -787,14 +859,13 @@ function ESP:Add(instance, espType, customName, customColor)
             end
         end
         
-        -- BOX
-        if espType == "Entity" or espType == "Lever" then
+        if espType == "Entity" or espType == "Lever" or espType == "Gold" then
             local boxHandles = Instance.new("BoxHandleAdornment")
             boxHandles.Name = "ESP_Box"
             boxHandles.Adornee = primaryPart
             boxHandles.Size = primaryPart.Size * 1.2
             boxHandles.Color3 = color
-            boxHandles.Transparency = 0.6
+            boxHandles.Transparency = espType == "Gold" and 0.3 or 0.6
             boxHandles.AlwaysOnTop = true
             boxHandles.ZIndex = 1
             boxHandles.Parent = ESPFolder
@@ -824,7 +895,6 @@ function ESP:Add(instance, espType, customName, customColor)
     end
 end
 
--- Удаление ESP
 function ESP:Remove(instance)
     local espData = self.Objects[instance]
     if not espData then return end
@@ -858,7 +928,6 @@ function ESP:Remove(instance)
     end)
 end
 
--- Очистка ESP
 function ESP:Clear()
     for instance, _ in pairs(self.Objects) do
         self:Remove(instance)
@@ -875,7 +944,6 @@ function ESP:Clear()
     self.DoorESP = {}
 end
 
--- Очистка старых дверей
 function ESP:AggressiveCleanDoors()
     local currentRoom = GetCurrentRoom()
     self.CurrentPlayerRoom = currentRoom
@@ -936,7 +1004,6 @@ function ESP:AggressiveCleanDoors()
     return removed
 end
 
--- Обновление ESP
 function ESP:Update()
     if not Config.ESP.Enabled then
         for _, tracer in pairs(self.Tracers) do
@@ -992,7 +1059,7 @@ function ESP:Update()
                                 component.To = Vector2.new(screenPos.X, screenPos.Y)
                                 component.Color = espData.Color
                                 component.Transparency = 0.8
-                                component.Thickness = 2
+                                component.Thickness = espData.Type == "Gold" and 3 or 2
                                 component.Visible = true
                             else
                                 component.Visible = false
@@ -1018,24 +1085,23 @@ function ESP:Update()
                 espData.Components.TextLabel.Text = string.format("%s [%dm]", espData.Name, distText)
                 
                 if distance < 50 then
-                    espData.Components.TextLabel.TextSize = 18
+                    espData.Components.TextLabel.TextSize = espData.Type == "Gold" and 20 or 18
                 elseif distance < 150 then
-                    espData.Components.TextLabel.TextSize = 16
+                    espData.Components.TextLabel.TextSize = espData.Type == "Gold" and 18 or 16
                 else
                     espData.Components.TextLabel.TextSize = 14
                 end
             end
             
-            if (espData.Type == "Entity" or espData.Type == "Lever") and espData.Components.Highlight then
-                local pulse = 0.5 + (math.sin(tick() * 3) * 0.3)
-                espData.Components.Highlight.FillTransparency = pulse
+            if (espData.Type == "Entity" or espData.Type == "Lever" or espData.Type == "Gold") and espData.Components.Highlight then
+                local pulse = 0.5 + (math.sin(tick() * (espData.Type == "Gold" and 4 or 3)) * 0.3)
+                espData.Components.Highlight.FillTransparency = espData.Type == "Gold" and pulse * 0.4 or pulse
                 espData.Components.Highlight.OutlineTransparency = pulse * 0.5
             end
         end)
     end
 end
 
--- Поиск рычагов
 local function FindLevers(room)
     local levers = {}
     
@@ -1059,7 +1125,6 @@ local function FindLevers(room)
     return levers
 end
 
--- Поиск объектов
 function ESP:ScanWorkspace()
     task.spawn(function()
         while task.wait(Config.ESP.RefreshRate) do
@@ -1080,7 +1145,6 @@ function ESP:ScanWorkspace()
                     self.LastCleanup = tick()
                 end
                 
-                -- ДВЕРИ
                 if Config.ESP.Doors then
                     local currentDoorESP = 0
                     for _ in pairs(self.DoorESP) do
@@ -1101,7 +1165,6 @@ function ESP:ScanWorkspace()
                     end
                 end
                 
-                -- КЛЮЧИ И РЫЧАГИ
                 if Config.ESP.Keys then
                     for _, item in pairs(currentRooms:GetDescendants()) do
                         if ImportantItems[item.Name] then
@@ -1125,21 +1188,38 @@ function ESP:ScanWorkspace()
                     end
                 end
                 
-                -- ПРЕДМЕТЫ
                 if Config.ESP.Items then
                     for _, item in pairs(currentRooms:GetDescendants()) do
                         if ImportantItems[item.Name] and not self.Objects[item] then
                             local itemData = ImportantItems[item.Name]
                             if not item.Name:find("Key") then
                                 if item:IsA("Model") or item:FindFirstChildWhichIsA("BasePart") then
-                                    self:Add(item, "Item", itemData.Name, itemData.Color)
+                                    local espType = (item.Name:find("Gold") or item.Name:find("Coin") or 
+                                                    item.Name:find("Treasure") or item.Name:find("Chest")) and "Gold" or "Item"
+                                    self:Add(item, espType, itemData.Name, itemData.Color)
                                 end
+                            end
+                        end
+                    end
+                    
+                    for _, room in pairs(currentRooms:GetChildren()) do
+                        local goldItems = FindGoldInRoom(room)
+                        for _, gold in pairs(goldItems) do
+                            if not self.Objects[gold] then
+                                local goldName = "💰 Золото"
+                                if gold.Name:find("Chest") then
+                                    goldName = "📦 Сундук с золотом"
+                                elseif gold.Name:find("Coin") then
+                                    goldName = "🪙 Монета"
+                                elseif gold.Name:find("Treasure") then
+                                    goldName = "💎 Сокровище"
+                                end
+                                self:Add(gold, "Gold", goldName, Config.Colors.Gold)
                             end
                         end
                     end
                 end
                 
-                -- МОНСТРЫ
                 if Config.ESP.Entities then
                     local searchAreas = {
                         Workspace,
@@ -1171,7 +1251,6 @@ function ESP:ScanWorkspace()
     end)
 end
 
--- God Mode
 local GodMode = {}
 GodMode.Connections = {}
 
@@ -1204,7 +1283,6 @@ function GodMode:Disable()
     GodMode.Connections = {}
 end
 
--- СИСТЕМА СКОРОСТИ С АНТИЧИТОМ
 local SpeedSystem = {}
 SpeedSystem.Connection = nil
 
@@ -1274,7 +1352,6 @@ function SpeedSystem:UpdateSpeed(value)
     end
 end
 
--- Удаляем старое GUI
 pcall(function()
     if CoreGui:FindFirstChild("DoorsHub") then
         CoreGui:FindFirstChild("DoorsHub"):Destroy()
@@ -1283,7 +1360,6 @@ end)
 
 wait(0.3)
 
--- GUI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "DoorsHub"
 ScreenGui.ResetOnSpawn = false
@@ -1298,7 +1374,6 @@ if not ScreenGui.Parent then
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- Главный фрейм
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 450, 0, 750)
@@ -1320,7 +1395,6 @@ Gradient.Color = ColorSequence.new{
 Gradient.Rotation = 45
 Gradient.Parent = MainFrame
 
--- Заголовок
 local Title = Instance.new("TextLabel")
 Title.Name = "Title"
 Title.Size = UDim2.new(1, 0, 0, 70)
@@ -1351,18 +1425,16 @@ TitleStroke.Thickness = 2
 TitleStroke.Transparency = 0.3
 TitleStroke.Parent = Title
 
--- Версия
 local Version = Instance.new("TextLabel")
 Version.Size = UDim2.new(0, 100, 0, 25)
 Version.Position = UDim2.new(1, -110, 0, 40)
 Version.BackgroundTransparency = 1
-Version.Text = "v1.7 🛡️"
-Version.TextColor3 = Color3.fromRGB(0, 255, 100)
+Version.Text = "v1.7 💰"
+Version.TextColor3 = Color3.fromRGB(255, 215, 0)
 Version.Font = Enum.Font.GothamBold
 Version.TextSize = 12
 Version.Parent = Title
 
--- Статус
 local StatusLabel = Instance.new("TextLabel")
 StatusLabel.Size = UDim2.new(0, 200, 0, 20)
 StatusLabel.Position = UDim2.new(0, 15, 0, 45)
@@ -1374,7 +1446,6 @@ StatusLabel.TextSize = 11
 StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
 StatusLabel.Parent = Title
 
--- Счетчик ESP
 local ESPCounter = Instance.new("TextLabel")
 ESPCounter.Size = UDim2.new(0, 150, 0, 20)
 ESPCounter.Position = UDim2.new(0, 220, 0, 45)
@@ -1406,7 +1477,6 @@ task.spawn(function()
     end
 end)
 
--- Статус Античита
 local AntiCheatStatus = Instance.new("TextLabel")
 AntiCheatStatus.Size = UDim2.new(1, -30, 0, 25)
 AntiCheatStatus.Position = UDim2.new(0, 15, 0, 70)
@@ -1439,7 +1509,6 @@ task.spawn(function()
     end
 end)
 
--- Скролл фрейм
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Size = UDim2.new(1, -30, 1, -110)
 ScrollFrame.Position = UDim2.new(0, 15, 0, 100)
@@ -1459,7 +1528,6 @@ UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 15)
 end)
 
--- Функции создания элементов
 local function CreateSection(name, icon)
     local Section = Instance.new("Frame")
     Section.Size = UDim2.new(1, 0, 0, 35)
@@ -1737,7 +1805,6 @@ local function CreateButton(name, icon, callback)
     return ButtonFrame
 end
 
--- Создание элементов меню
 CreateSection("ESP Настройки", "🎯")
 
 CreateToggle("ESP Включен", "👁️", function(state)
@@ -1760,8 +1827,15 @@ CreateToggle("ESP Ключей + Рычагов", "🔑", function(state)
     Config.ESP.Keys = state
 end, Config.ESP.Keys)
 
-CreateToggle("ESP Предметов", "📦", function(state)
+CreateToggle("ESP Предметов + 💰 ЗОЛОТА", "📦", function(state)
     Config.ESP.Items = state
+    if state then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "💰 ESP ЗОЛОТА";
+            Text = "✅ Поиск золота и сундуков активирован!";
+            Duration = 3;
+        })
+    end
 end, Config.ESP.Items)
 
 CreateToggle("ESP Монстров", "👹", function(state)
@@ -1908,7 +1982,6 @@ CreateToggle("🛡️ God Mode", "💪", function(state)
     end
 end, Config.GodMode.Enabled)
 
--- Кнопки управления окном
 local CloseButton = Instance.new("TextButton")
 CloseButton.Size = UDim2.new(0, 40, 0, 40)
 CloseButton.Position = UDim2.new(1, -50, 0, 15)
@@ -1956,7 +2029,6 @@ MinButton.MouseButton1Click:Connect(function()
     MinButton.Text = minimized and "+" or "−"
 end)
 
--- Перетаскивание
 local dragging = false
 local dragInput, dragStart, startPos
 
@@ -1992,22 +2064,18 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Горячая клавиша
 UserInputService.InputBegan:Connect(function(input, gpe)
     if not gpe and input.KeyCode == Enum.KeyCode.Insert then
         MainFrame.Visible = not MainFrame.Visible
     end
 end)
 
--- Запуск систем
 ESP:ScanWorkspace()
 
--- Обновление ESP
 RunService.RenderStepped:Connect(function()
     ESP:Update()
 end)
 
--- Защита при респавне
 LocalPlayer.CharacterAdded:Connect(function()
     task.wait(1)
     if Config.GodMode.Enabled then
@@ -2018,23 +2086,23 @@ LocalPlayer.CharacterAdded:Connect(function()
     end
 end)
 
--- Инициализация
 if Config.Speed.Enabled then
     SpeedSystem:Enable()
 end
 
--- Финальное уведомление
 game:GetService("StarterGui"):SetCore("SendNotification", {
     Title = "🎯 DOORS HUB v1.7";
-    Text = "✅ Загружен с МОЩНЫМ АНТИЧИТОМ! INSERT = Меню";
+    Text = "✅ Загружен! 💰 ESP ЗОЛОТА работает! INSERT = Меню";
     Duration = 5;
 })
 
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 print("✅ DOORS HUB v1.7 - ПОЛНОСТЬЮ ЗАГРУЖЕН")
+print("💬 Discord ссылка скопирована!")
 print("🔐 21 рабочих ключей активировано")
 print("🛡️ МОЩНЕЙШИЙ АНТИЧИТ АКТИВИРОВАН!")
 print("📍 Трекеры работают!")
 print("🚪 Оптимизация активна")
+print("💰 ESP ЗОЛОТА И СУНДУКОВ ДОБАВЛЕН!")
 print("🎮 INSERT - открыть/закрыть меню")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
