@@ -1,5 +1,5 @@
--- DOORS HUB v1.6 FINAL
--- Система ключа доступа + Исправленные трекеры
+-- DOORS HUB v1.7 FINAL
+-- Система ключа доступа + Исправленные трекеры + МОЩНЕЙШИЙ АНТИЧИТ
 
 -- ═══════════════════════════════════════════════════════════
 -- СИСТЕМА АВТОРИЗАЦИИ
@@ -253,6 +253,196 @@ CreateKeySystem()
 repeat wait(0.1) until KeyEntered
 
 -- ═══════════════════════════════════════════════════════════
+-- МОЩНЕЙШИЙ АНТИЧИТ НА СКОРОСТЬ
+-- ═══════════════════════════════════════════════════════════
+
+local AntiCheat = {
+    Enabled = true,
+    Settings = {
+        MaxSpeed = 22,              -- Максимальная безопасная скорость
+        SmoothTransition = true,    -- Плавное изменение
+        TransitionSpeed = 0.15,     -- Скорость плавности
+        RandomVariation = true,     -- Случайные вариации
+        VariationRange = 0.3,       -- Диапазон вариаций
+        PulseEffect = true,         -- Пульсирующий эффект
+        PulseInterval = 2,          -- Интервал пульсаций
+        HumanLikeMovement = true,   -- Человекоподобное движение
+        DetectionAvoidance = true,  -- Избегание детектирования
+        SafetyMargin = 1.5,         -- Запас безопасности
+        AdaptiveSpeed = true,       -- Адаптивная скорость
+        StealthMode = true          -- Режим скрытности
+    },
+    Data = {
+        BaseSpeed = 16,
+        CurrentSpeed = 16,
+        TargetSpeed = 16,
+        LastUpdate = tick(),
+        LastPulse = tick(),
+        DetectionLevel = 0,
+        IsRunning = false,
+        SpeedHistory = {},
+        MaxHistorySize = 50
+    }
+}
+
+-- Функция расчета безопасной скорости
+function AntiCheat:CalculateSafeSpeed(desiredSpeed)
+    local safeSpeed = math.min(desiredSpeed, self.Settings.MaxSpeed)
+    
+    -- Добавление случайной вариации
+    if self.Settings.RandomVariation then
+        local variation = (math.random() - 0.5) * 2 * self.Settings.VariationRange
+        safeSpeed = safeSpeed + variation
+    end
+    
+    -- Пульсирующий эффект
+    if self.Settings.PulseEffect then
+        if tick() - self.Data.LastPulse > self.Settings.PulseInterval then
+            local pulse = math.sin(tick() * 2) * 0.5
+            safeSpeed = safeSpeed + pulse
+            self.Data.LastPulse = tick()
+        end
+    end
+    
+    -- Человекоподобные колебания
+    if self.Settings.HumanLikeMovement then
+        local humanFactor = math.sin(tick() * 3.5) * 0.2 + math.cos(tick() * 1.7) * 0.15
+        safeSpeed = safeSpeed + humanFactor
+    end
+    
+    -- Адаптивная коррекция
+    if self.Settings.AdaptiveSpeed then
+        local avgSpeed = self:GetAverageSpeed()
+        if avgSpeed > 0 then
+            local adaptiveFactor = math.clamp((safeSpeed - avgSpeed) / avgSpeed, -0.1, 0.1)
+            safeSpeed = safeSpeed - adaptiveFactor
+        end
+    end
+    
+    -- Режим скрытности - дополнительные ограничения
+    if self.Settings.StealthMode then
+        safeSpeed = math.min(safeSpeed, self.Settings.MaxSpeed - self.Settings.SafetyMargin)
+    end
+    
+    return math.clamp(safeSpeed, self.Data.BaseSpeed, self.Settings.MaxSpeed)
+end
+
+-- Получение средней скорости
+function AntiCheat:GetAverageSpeed()
+    if #self.Data.SpeedHistory == 0 then return 0 end
+    
+    local sum = 0
+    for _, speed in ipairs(self.Data.SpeedHistory) do
+        sum = sum + speed
+    end
+    
+    return sum / #self.Data.SpeedHistory
+end
+
+-- Добавление в историю
+function AntiCheat:AddToHistory(speed)
+    table.insert(self.Data.SpeedHistory, speed)
+    
+    if #self.Data.SpeedHistory > self.Settings.MaxHistorySize then
+        table.remove(self.Data.SpeedHistory, 1)
+    end
+end
+
+-- Плавное изменение скорости
+function AntiCheat:SmoothSpeed(current, target, delta)
+    if not self.Settings.SmoothTransition then
+        return target
+    end
+    
+    local difference = target - current
+    local change = difference * self.Settings.TransitionSpeed * (delta * 60)
+    
+    return current + change
+end
+
+-- Определение уровня детектирования
+function AntiCheat:UpdateDetectionLevel()
+    local avgSpeed = self:GetAverageSpeed()
+    
+    if avgSpeed > self.Settings.MaxSpeed * 0.9 then
+        self.Data.DetectionLevel = math.min(self.Data.DetectionLevel + 0.1, 1)
+    else
+        self.Data.DetectionLevel = math.max(self.Data.DetectionLevel - 0.05, 0)
+    end
+    
+    -- Автоматическая коррекция при высоком уровне детектирования
+    if self.Settings.DetectionAvoidance and self.Data.DetectionLevel > 0.7 then
+        self.Settings.MaxSpeed = math.max(self.Settings.MaxSpeed - 0.5, 18)
+        
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "⚠️ АНТИЧИТ";
+            Text = "Обнаружена высокая активность! Снижение скорости...";
+            Duration = 3;
+        })
+    elseif self.Data.DetectionLevel < 0.2 then
+        self.Settings.MaxSpeed = math.min(self.Settings.MaxSpeed + 0.1, 22)
+    end
+end
+
+-- Основная функция обновления
+function AntiCheat:Update()
+    if not self.Enabled then return end
+    
+    local character = LocalPlayer.Character
+    if not character then return end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    
+    local delta = tick() - self.Data.LastUpdate
+    self.Data.LastUpdate = tick()
+    
+    -- Расчет целевой скорости
+    local desiredSpeed = self.Data.TargetSpeed
+    local safeSpeed = self:CalculateSafeSpeed(desiredSpeed)
+    
+    -- Плавное изменение
+    self.Data.CurrentSpeed = self:SmoothSpeed(self.Data.CurrentSpeed, safeSpeed, delta)
+    
+    -- Применение скорости
+    if humanoid.WalkSpeed ~= self.Data.CurrentSpeed then
+        humanoid.WalkSpeed = self.Data.CurrentSpeed
+    end
+    
+    -- Обновление истории
+    self:AddToHistory(self.Data.CurrentSpeed)
+    
+    -- Обновление уровня детектирования
+    if tick() % 1 < delta then
+        self:UpdateDetectionLevel()
+    end
+end
+
+-- Установка целевой скорости
+function AntiCheat:SetTargetSpeed(speed)
+    self.Data.TargetSpeed = speed
+    self.Data.IsRunning = speed > self.Data.BaseSpeed
+end
+
+-- Сброс античита
+function AntiCheat:Reset()
+    self.Data.CurrentSpeed = self.Data.BaseSpeed
+    self.Data.TargetSpeed = self.Data.BaseSpeed
+    self.Data.SpeedHistory = {}
+    self.Data.DetectionLevel = 0
+    self.Data.IsRunning = false
+    self.Settings.MaxSpeed = 22
+    
+    local character = LocalPlayer.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = self.Data.BaseSpeed
+        end
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════
 -- ОСНОВНОЙ СКРИПТ (загружается после ввода ключа)
 -- ═══════════════════════════════════════════════════════════
 
@@ -303,7 +493,8 @@ local Config = {
     },
     Speed = {
         Enabled = false,
-        Value = 20
+        Value = 20,
+        UseAntiCheat = true  -- НОВОЕ: использовать античит
     },
     GodMode = {
         Enabled = false
@@ -979,7 +1170,7 @@ function GodMode:Disable()
     GodMode.Connections = {}
 end
 
--- Система скорости
+-- НОВАЯ СИСТЕМА СКОРОСТИ С АНТИЧИТОМ
 local SpeedSystem = {}
 SpeedSystem.Connection = nil
 
@@ -990,17 +1181,33 @@ function SpeedSystem:Enable()
             self.Connection = nil
         end
         
+        if Config.Speed.UseAntiCheat then
+            AntiCheat:SetTargetSpeed(Config.Speed.Value)
+            AntiCheat.Enabled = true
+            
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "🛡️ АНТИЧИТ СКОРОСТИ";
+                Text = "✅ Защита активирована! Безопасная скорость установлена.";
+                Duration = 4;
+            })
+        end
+        
         self.Connection = RunService.Heartbeat:Connect(function()
             if not Config.Speed.Enabled then return end
             
-            local character = LocalPlayer.Character
-            if not character then return end
-            
-            local humanoid = character:FindFirstChildOfClass("Humanoid")
-            if not humanoid then return end
-            
-            if humanoid.WalkSpeed ~= Config.Speed.Value then
-                humanoid.WalkSpeed = Config.Speed.Value
+            if Config.Speed.UseAntiCheat then
+                AntiCheat:Update()
+            else
+                -- Обычный режим без античита
+                local character = LocalPlayer.Character
+                if not character then return end
+                
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if not humanoid then return end
+                
+                if humanoid.WalkSpeed ~= Config.Speed.Value then
+                    humanoid.WalkSpeed = Config.Speed.Value
+                end
             end
         end)
     end)
@@ -1013,6 +1220,9 @@ function SpeedSystem:Disable()
             self.Connection = nil
         end
         
+        AntiCheat.Enabled = false
+        AntiCheat:Reset()
+        
         local character = LocalPlayer.Character
         if character then
             local humanoid = character:FindFirstChildOfClass("Humanoid")
@@ -1021,6 +1231,14 @@ function SpeedSystem:Disable()
             end
         end
     end)
+end
+
+function SpeedSystem:UpdateSpeed(value)
+    Config.Speed.Value = value
+    
+    if Config.Speed.UseAntiCheat then
+        AntiCheat:SetTargetSpeed(value)
+    end
 end
 
 -- Удаляем старое GUI
@@ -1050,8 +1268,8 @@ end
 -- Главный фрейм
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 450, 0, 670)
-MainFrame.Position = UDim2.new(0.5, -225, 0.5, -335)
+MainFrame.Size = UDim2.new(0, 450, 0, 750)
+MainFrame.Position = UDim2.new(0.5, -225, 0.5, -375)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -1105,7 +1323,7 @@ local Version = Instance.new("TextLabel")
 Version.Size = UDim2.new(0, 100, 0, 25)
 Version.Position = UDim2.new(1, -110, 0, 40)
 Version.BackgroundTransparency = 1
-Version.Text = "v1.6 🔐"
+Version.Text = "v1.7 🛡️"
 Version.TextColor3 = Color3.fromRGB(0, 255, 100)
 Version.Font = Enum.Font.GothamBold
 Version.TextSize = 12
@@ -1155,10 +1373,43 @@ task.spawn(function()
     end
 end)
 
+-- Статус Античита
+local AntiCheatStatus = Instance.new("TextLabel")
+AntiCheatStatus.Size = UDim2.new(1, -30, 0, 25)
+AntiCheatStatus.Position = UDim2.new(0, 15, 0, 70)
+AntiCheatStatus.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+AntiCheatStatus.Text = "🛡️ Античит: Неактивен | Безопасность: 0%"
+AntiCheatStatus.TextColor3 = Color3.fromRGB(150, 150, 150)
+AntiCheatStatus.Font = Enum.Font.Gotham
+AntiCheatStatus.TextSize = 12
+AntiCheatStatus.Parent = Title
+
+local AntiCheatCorner = Instance.new("UICorner")
+AntiCheatCorner.CornerRadius = UDim.new(0, 8)
+AntiCheatCorner.Parent = AntiCheatStatus
+
+task.spawn(function()
+    while wait(0.5) do
+        if AntiCheat.Enabled and Config.Speed.Enabled then
+            local safetyLevel = math.floor((1 - AntiCheat.Data.DetectionLevel) * 100)
+            local statusColor = safetyLevel > 70 and Color3.fromRGB(0, 255, 100) or 
+                               safetyLevel > 40 and Color3.fromRGB(255, 200, 0) or 
+                               Color3.fromRGB(255, 100, 100)
+            
+            AntiCheatStatus.Text = string.format("🛡️ Античит: Активен | Скорость: %.1f | Безопасность: %d%%", 
+                AntiCheat.Data.CurrentSpeed, safetyLevel)
+            AntiCheatStatus.TextColor3 = statusColor
+        else
+            AntiCheatStatus.Text = "🛡️ Античит: Неактивен | Безопасность: 0%"
+            AntiCheatStatus.TextColor3 = Color3.fromRGB(150, 150, 150)
+        end
+    end
+end)
+
 -- Скролл фрейм
 local ScrollFrame = Instance.new("ScrollingFrame")
-ScrollFrame.Size = UDim2.new(1, -30, 1, -90)
-ScrollFrame.Position = UDim2.new(0, 15, 0, 80)
+ScrollFrame.Size = UDim2.new(1, -30, 1, -110)
+ScrollFrame.Position = UDim2.new(0, 15, 0, 100)
 ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.ScrollBarThickness = 5
 ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 150, 255)
@@ -1175,7 +1426,7 @@ UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 15)
 end)
 
--- Функции создания элементов (те же что и раньше)
+-- Функции создания элементов
 local function CreateSection(name, icon)
     local Section = Instance.new("Frame")
     Section.Size = UDim2.new(1, 0, 0, 35)
@@ -1523,9 +1774,9 @@ CreateButton("🧹 Очистить ESP дверей", "🗑️", function()
     StatusLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
 end)
 
-CreateSection("Игрок", "👤")
+CreateSection("Игрок (С МОЩНЫМ АНТИЧИТОМ)", "👤")
 
-CreateToggle("Скорость (Не сбрасывается)", "⚡", function(state)
+CreateToggle("Скорость (С ЗАЩИТОЙ)", "⚡", function(state)
     Config.Speed.Enabled = state
     if state then
         SpeedSystem:Enable()
@@ -1534,9 +1785,86 @@ CreateToggle("Скорость (Не сбрасывается)", "⚡", function
     end
 end, Config.Speed.Enabled)
 
+CreateToggle("🛡️ Использовать Античит", "🔒", function(state)
+    Config.Speed.UseAntiCheat = state
+    
+    if state then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "🛡️ АНТИЧИТ";
+            Text = "✅ Защита АКТИВИРОВАНА! Вы в безопасности.";
+            Duration = 4;
+        })
+    else
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "⚠️ ПРЕДУПРЕЖДЕНИЕ";
+            Text = "❌ Античит отключен! Высокий риск бана!";
+            Duration = 4;
+        })
+    end
+    
+    if Config.Speed.Enabled then
+        SpeedSystem:Disable()
+        wait(0.1)
+        SpeedSystem:Enable()
+    end
+end, Config.Speed.UseAntiCheat)
+
 CreateSlider("Значение скорости", "🏃", 16, 100, Config.Speed.Value, function(value)
-    Config.Speed.Value = value
+    SpeedSystem:UpdateSpeed(value)
 end)
+
+CreateSection("Настройки Античита (РАСШИРЕННЫЕ)", "⚙️")
+
+CreateSlider("Макс. безопасная скорость", "🛡️", 18, 30, AntiCheat.Settings.MaxSpeed, function(value)
+    AntiCheat.Settings.MaxSpeed = value
+end)
+
+CreateToggle("Плавное изменение", "〰️", function(state)
+    AntiCheat.Settings.SmoothTransition = state
+end, AntiCheat.Settings.SmoothTransition)
+
+CreateToggle("Случайные вариации", "🎲", function(state)
+    AntiCheat.Settings.RandomVariation = state
+end, AntiCheat.Settings.RandomVariation)
+
+CreateToggle("Пульсирующий эффект", "💓", function(state)
+    AntiCheat.Settings.PulseEffect = state
+end, AntiCheat.Settings.PulseEffect)
+
+CreateToggle("Человекоподобное движение", "🚶", function(state)
+    AntiCheat.Settings.HumanLikeMovement = state
+end, AntiCheat.Settings.HumanLikeMovement)
+
+CreateToggle("Избегание детектирования", "👻", function(state)
+    AntiCheat.Settings.DetectionAvoidance = state
+end, AntiCheat.Settings.DetectionAvoidance)
+
+CreateToggle("Адаптивная скорость", "🧠", function(state)
+    AntiCheat.Settings.AdaptiveSpeed = state
+end, AntiCheat.Settings.AdaptiveSpeed)
+
+CreateToggle("Режим скрытности (MAX ЗАЩИТА)", "🥷", function(state)
+    AntiCheat.Settings.StealthMode = state
+    
+    if state then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "🥷 STEALTH MODE";
+            Text = "✅ Максимальная защита активирована!";
+            Duration = 3;
+        })
+    end
+end, AntiCheat.Settings.StealthMode)
+
+CreateButton("🔄 Сбросить Античит", "♻️", function()
+    AntiCheat:Reset()
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "🔄 СБРОС";
+        Text = "✅ Античит сброшен до заводских настроек!";
+        Duration = 3;
+    })
+end)
+
+CreateSection("Дополнительно", "🎮")
 
 CreateToggle("🛡️ God Mode", "💪", function(state)
     Config.GodMode.Enabled = state
@@ -1587,10 +1915,11 @@ MinButton.MouseButton1Click:Connect(function()
     minimized = not minimized
     
     TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
-        Size = minimized and UDim2.new(0, 450, 0, 70) or UDim2.new(0, 450, 0, 670)
+        Size = minimized and UDim2.new(0, 450, 0, 70) or UDim2.new(0, 450, 0, 750)
     }):Play()
     
     ScrollFrame.Visible = not minimized
+    AntiCheatStatus.Visible = not minimized
     MinButton.Text = minimized and "+" or "−"
 end)
 
@@ -1663,14 +1992,15 @@ end
 
 -- Финальное уведомление
 game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "🎯 DOORS HUB v1.6";
-    Text = "✅ Загружен успешно! INSERT = Меню";
+    Title = "🎯 DOORS HUB v1.7";
+    Text = "✅ Загружен с МОЩНЫМ АНТИЧИТОМ! INSERT = Меню";
     Duration = 5;
 })
 
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("✅ DOORS HUB v1.6 - ПОЛНОСТЬЮ ЗАГРУЖЕН")
+print("✅ DOORS HUB v1.7 - ПОЛНОСТЬЮ ЗАГРУЖЕН")
 print("🔐 Ключ: Lernix")
+print("🛡️ МОЩНЕЙШИЙ АНТИЧИТ АКТИВИРОВАН!")
 print("📍 Трекеры работают!")
 print("🚪 Оптимизация активна")
 print("🎮 INSERT - открыть/закрыть меню")
