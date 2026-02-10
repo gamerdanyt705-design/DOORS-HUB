@@ -1,5 +1,12 @@
--- DOORS HUB v1.5 FINAL
--- ТРЕКЕРЫ ПОЛНОСТЬЮ ИСПРАВЛЕНЫ
+-- DOORS HUB v1.6 FINAL
+-- Система ключа доступа + Исправленные трекеры
+
+-- ═══════════════════════════════════════════════════════════
+-- СИСТЕМА АВТОРИЗАЦИИ
+-- ═══════════════════════════════════════════════════════════
+
+local VALID_KEY = "Lernix" -- Ключ доступа
+local KeyEntered = false
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -8,12 +15,251 @@ local Workspace = game:GetService("Workspace")
 local CoreGui = game:GetService("CoreGui")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+
+-- Функция создания окна ввода ключа
+local function CreateKeySystem()
+    -- Удаляем старые окна
+    pcall(function()
+        if CoreGui:FindFirstChild("KeySystemGUI") then
+            CoreGui:FindFirstChild("KeySystemGUI"):Destroy()
+        end
+    end)
+    
+    local KeyGUI = Instance.new("ScreenGui")
+    KeyGUI.Name = "KeySystemGUI"
+    KeyGUI.ResetOnSpawn = false
+    KeyGUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    pcall(function()
+        KeyGUI.Parent = CoreGui
+    end)
+    
+    if not KeyGUI.Parent then
+        KeyGUI.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    end
+    
+    -- Затемнение фона
+    local Overlay = Instance.new("Frame")
+    Overlay.Size = UDim2.new(1, 0, 1, 0)
+    Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    Overlay.BackgroundTransparency = 0.3
+    Overlay.BorderSizePixel = 0
+    Overlay.Parent = KeyGUI
+    
+    -- Главное окно
+    local KeyFrame = Instance.new("Frame")
+    KeyFrame.Size = UDim2.new(0, 400, 0, 300)
+    KeyFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+    KeyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    KeyFrame.BorderSizePixel = 0
+    KeyFrame.Parent = KeyGUI
+    
+    local FrameCorner = Instance.new("UICorner")
+    FrameCorner.CornerRadius = UDim.new(0, 15)
+    FrameCorner.Parent = KeyFrame
+    
+    -- Градиент
+    local FrameGradient = Instance.new("UIGradient")
+    FrameGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 35, 55)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 35))
+    }
+    FrameGradient.Rotation = 45
+    FrameGradient.Parent = KeyFrame
+    
+    -- Обводка
+    local FrameStroke = Instance.new("UIStroke")
+    FrameStroke.Color = Color3.fromRGB(100, 150, 255)
+    FrameStroke.Thickness = 2
+    FrameStroke.Transparency = 0.5
+    FrameStroke.Parent = KeyFrame
+    
+    -- Заголовок
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Size = UDim2.new(1, 0, 0, 60)
+    TitleLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+    TitleLabel.Text = "🔐 DOORS HUB"
+    TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.TextSize = 24
+    TitleLabel.BorderSizePixel = 0
+    TitleLabel.Parent = KeyFrame
+    
+    local TitleCorner = Instance.new("UICorner")
+    TitleCorner.CornerRadius = UDim.new(0, 15)
+    TitleCorner.Parent = TitleLabel
+    
+    local TitleGradient = Instance.new("UIGradient")
+    TitleGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 80)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 50))
+    }
+    TitleGradient.Rotation = 90
+    TitleGradient.Parent = TitleLabel
+    
+    -- Информация
+    local InfoLabel = Instance.new("TextLabel")
+    InfoLabel.Size = UDim2.new(1, -40, 0, 60)
+    InfoLabel.Position = UDim2.new(0, 20, 0, 80)
+    InfoLabel.BackgroundTransparency = 1
+    InfoLabel.Text = "Введите ключ доступа\nдля использования скрипта"
+    InfoLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    InfoLabel.Font = Enum.Font.Gotham
+    InfoLabel.TextSize = 14
+    InfoLabel.TextWrapped = true
+    InfoLabel.Parent = KeyFrame
+    
+    -- Поле ввода
+    local KeyBox = Instance.new("TextBox")
+    KeyBox.Size = UDim2.new(1, -60, 0, 45)
+    KeyBox.Position = UDim2.new(0, 30, 0, 150)
+    KeyBox.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+    KeyBox.PlaceholderText = "Введите ключ..."
+    KeyBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    KeyBox.Text = ""
+    KeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    KeyBox.Font = Enum.Font.Gotham
+    KeyBox.TextSize = 16
+    KeyBox.ClearTextOnFocus = false
+    KeyBox.Parent = KeyFrame
+    
+    local BoxCorner = Instance.new("UICorner")
+    BoxCorner.CornerRadius = UDim.new(0, 10)
+    BoxCorner.Parent = KeyBox
+    
+    local BoxStroke = Instance.new("UIStroke")
+    BoxStroke.Color = Color3.fromRGB(100, 150, 255)
+    BoxStroke.Thickness = 1
+    BoxStroke.Transparency = 0.7
+    BoxStroke.Parent = KeyBox
+    
+    -- Кнопка подтверждения
+    local SubmitButton = Instance.new("TextButton")
+    SubmitButton.Size = UDim2.new(1, -60, 0, 45)
+    SubmitButton.Position = UDim2.new(0, 30, 0, 215)
+    SubmitButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+    SubmitButton.Text = "✓ Подтвердить"
+    SubmitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SubmitButton.Font = Enum.Font.GothamBold
+    SubmitButton.TextSize = 16
+    SubmitButton.BorderSizePixel = 0
+    SubmitButton.Parent = KeyFrame
+    
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0, 10)
+    ButtonCorner.Parent = SubmitButton
+    
+    -- Статус
+    local StatusLabel = Instance.new("TextLabel")
+    StatusLabel.Size = UDim2.new(1, -40, 0, 20)
+    StatusLabel.Position = UDim2.new(0, 20, 1, -30)
+    StatusLabel.BackgroundTransparency = 1
+    StatusLabel.Text = ""
+    StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+    StatusLabel.Font = Enum.Font.Gotham
+    StatusLabel.TextSize = 12
+    StatusLabel.Parent = KeyFrame
+    
+    -- Анимация появления
+    KeyFrame.Size = UDim2.new(0, 0, 0, 0)
+    TweenService:Create(KeyFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
+        Size = UDim2.new(0, 400, 0, 300)
+    }):Play()
+    
+    -- Функция проверки ключа
+    local function CheckKey()
+        local enteredKey = KeyBox.Text
+        
+        if enteredKey == VALID_KEY then
+            -- Правильный ключ
+            StatusLabel.Text = "✅ Ключ верный! Загрузка..."
+            StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 100)
+            
+            KeyEntered = true
+            
+            -- Анимация закрытия
+            TweenService:Create(KeyFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {
+                Size = UDim2.new(0, 0, 0, 0)
+            }):Play()
+            
+            wait(0.5)
+            KeyGUI:Destroy()
+            
+            -- Уведомление об успехе
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "🎯 DOORS HUB";
+                Text = "✅ Доступ разрешен! Добро пожаловать!";
+                Duration = 5;
+            })
+            
+            return true
+        else
+            -- Неправильный ключ
+            StatusLabel.Text = "❌ Неверный ключ!"
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+            
+            -- Тряска окна
+            local originalPos = KeyFrame.Position
+            for i = 1, 3 do
+                TweenService:Create(KeyFrame, TweenInfo.new(0.05), {
+                    Position = originalPos + UDim2.new(0, 10, 0, 0)
+                }):Play()
+                wait(0.05)
+                TweenService:Create(KeyFrame, TweenInfo.new(0.05), {
+                    Position = originalPos - UDim2.new(0, 10, 0, 0)
+                }):Play()
+                wait(0.05)
+            end
+            TweenService:Create(KeyFrame, TweenInfo.new(0.1), {
+                Position = originalPos
+            }):Play()
+            
+            KeyBox.Text = ""
+            return false
+        end
+    end
+    
+    -- Обработчики событий
+    SubmitButton.MouseButton1Click:Connect(CheckKey)
+    
+    KeyBox.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            CheckKey()
+        end
+    end)
+    
+    SubmitButton.MouseEnter:Connect(function()
+        TweenService:Create(SubmitButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(0, 140, 255)
+        }):Play()
+    end)
+    
+    SubmitButton.MouseLeave:Connect(function()
+        TweenService:Create(SubmitButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+        }):Play()
+    end)
+    
+    -- Автофокус на поле ввода
+    wait(0.5)
+    KeyBox:CaptureFocus()
+end
+
+-- Показываем систему ключа
+CreateKeySystem()
+
+-- Ждем ввода ключа
+repeat wait(0.1) until KeyEntered
+
+-- ═══════════════════════════════════════════════════════════
+-- ОСНОВНОЙ СКРИПТ (загружается после ввода ключа)
+-- ═══════════════════════════════════════════════════════════
 
 -- Проверка Drawing API
 local DrawingSupported = false
 local DrawingAPI = nil
 
--- Пробуем разные методы загрузки Drawing
 pcall(function()
     DrawingAPI = Drawing
     if DrawingAPI and DrawingAPI.new then
@@ -110,7 +356,7 @@ local EntityNames = {
 local ESP = {}
 ESP.Objects = {}
 ESP.Connections = {}
-ESP.Tracers = {} -- Отдельное хранилище для трекеров
+ESP.Tracers = {}
 ESP.DoorESP = {}
 ESP.CurrentPlayerRoom = 0
 ESP.LastCleanup = 0
@@ -181,7 +427,7 @@ local function GetCurrentRoom()
     return closestRoom
 end
 
--- ИСПРАВЛЕННАЯ функция создания трекера
+-- Создание трекера
 local function CreateTracer(color)
     if not DrawingSupported or not DrawingAPI then return nil end
     
@@ -205,7 +451,6 @@ end
 function ESP:Add(instance, espType, customName, customColor)
     if not instance or self.Objects[instance] then return end
     
-    -- Ограничение для дверей
     if espType == "Door" then
         local doorCount = 0
         for _, data in pairs(self.DoorESP) do
@@ -252,7 +497,7 @@ function ESP:Add(instance, espType, customName, customColor)
         local primaryPart = GetPrimaryPart(instance)
         if not primaryPart then return end
         
-        -- 1. HIGHLIGHT
+        -- HIGHLIGHT
         if espType ~= "Door" or (espData.RoomNumber and math.abs(espData.RoomNumber - self.CurrentPlayerRoom) <= 2) then
             if espType == "Door" then
                 local doorPart = instance:FindFirstChild("Door") or instance:FindFirstChildWhichIsA("BasePart")
@@ -282,7 +527,7 @@ function ESP:Add(instance, espType, customName, customColor)
             end
         end
         
-        -- 2. BILLBOARD
+        -- BILLBOARD
         if espType ~= "Door" or (espData.RoomNumber and math.abs(espData.RoomNumber - self.CurrentPlayerRoom) <= Config.ESP.DoorRange) then
             local billboard = Instance.new("BillboardGui")
             billboard.Name = "ESP_Billboard"
@@ -308,7 +553,7 @@ function ESP:Add(instance, espType, customName, customColor)
             espData.Components.TextLabel = textLabel
         end
         
-        -- 3. TRACER - ИСПРАВЛЕННЫЙ
+        -- TRACER
         if Config.ESP.Tracers and DrawingSupported then
             local tracer = CreateTracer(color)
             if tracer then
@@ -317,7 +562,7 @@ function ESP:Add(instance, espType, customName, customColor)
             end
         end
         
-        -- 4. BOX для монстров и рычагов
+        -- BOX
         if espType == "Entity" or espType == "Lever" then
             local boxHandles = Instance.new("BoxHandleAdornment")
             boxHandles.Name = "ESP_Box"
@@ -376,7 +621,6 @@ function ESP:Remove(instance)
             espData.Connection:Disconnect()
         end
         
-        -- Удаляем трекер из отдельного списка
         if self.Tracers[instance] then
             pcall(function()
                 self.Tracers[instance]:Remove()
@@ -395,7 +639,6 @@ function ESP:Clear()
         self:Remove(instance)
     end
     
-    -- Очищаем все трекеры
     for _, tracer in pairs(self.Tracers) do
         pcall(function()
             tracer:Remove()
@@ -468,10 +711,9 @@ function ESP:AggressiveCleanDoors()
     return removed
 end
 
--- ИСПРАВЛЕННОЕ обновление ESP с рабочими трекерами
+-- Обновление ESP
 function ESP:Update()
     if not Config.ESP.Enabled then 
-        -- Скрываем все трекеры
         for _, tracer in pairs(self.Tracers) do
             pcall(function()
                 tracer.Visible = false
@@ -486,7 +728,6 @@ function ESP:Update()
     local rootPart = character:FindFirstChild("HumanoidRootPart")
     if not rootPart then return end
     
-    -- Позиция для трекеров (внизу экрана)
     local screenSize = Camera.ViewportSize
     local bottomCenter = Vector2.new(screenSize.X / 2, screenSize.Y - 100)
     local currentRoom = GetCurrentRoom()
@@ -504,7 +745,6 @@ function ESP:Update()
             local distance = (rootPart.Position - position).Magnitude
             local visible = distance <= Config.ESP.MaxDistance
             
-            -- Проверка для дверей
             if espData.Type == "Door" then
                 if espData.RoomNumber then
                     if espData.RoomNumber < (currentRoom - 1) or 
@@ -516,16 +756,13 @@ function ESP:Update()
                 end
             end
             
-            -- Обновляем компоненты
             for name, component in pairs(espData.Components) do
                 if name == "Tracer" then
-                    -- ИСПРАВЛЕННЫЕ ТРЕКЕРЫ
                     if Config.ESP.Tracers and visible and DrawingSupported then
                         local success = pcall(function()
                             local screenPos, onScreen = Camera:WorldToViewportPoint(position)
                             
                             if onScreen and screenPos.Z > 0 then
-                                -- Устанавливаем точки линии
                                 component.From = bottomCenter
                                 component.To = Vector2.new(screenPos.X, screenPos.Y)
                                 component.Color = espData.Color
@@ -551,7 +788,6 @@ function ESP:Update()
                 end
             end
             
-            -- Обновляем текст с дистанцией
             if espData.Components.TextLabel and Config.ESP.ShowDistance then
                 local distText = math.floor(distance)
                 espData.Components.TextLabel.Text = string.format("%s [%dm]", espData.Name, distText)
@@ -565,7 +801,6 @@ function ESP:Update()
                 end
             end
             
-            -- Пульсация для монстров и рычагов
             if (espData.Type == "Entity" or espData.Type == "Lever") and espData.Components.Highlight then
                 local pulse = 0.5 + (math.sin(tick() * 3) * 0.3)
                 espData.Components.Highlight.FillTransparency = pulse
@@ -620,7 +855,7 @@ function ESP:ScanWorkspace()
                     self.LastCleanup = tick()
                 end
                 
-                -- 1. ДВЕРИ
+                -- ДВЕРИ
                 if Config.ESP.Doors then
                     local currentDoorESP = 0
                     for _ in pairs(self.DoorESP) do
@@ -641,7 +876,7 @@ function ESP:ScanWorkspace()
                     end
                 end
                 
-                -- 2. КЛЮЧИ И РЫЧАГИ
+                -- КЛЮЧИ И РЫЧАГИ
                 if Config.ESP.Keys then
                     for _, item in pairs(currentRooms:GetDescendants()) do
                         if ImportantItems[item.Name] then
@@ -665,7 +900,7 @@ function ESP:ScanWorkspace()
                     end
                 end
                 
-                -- 3. ПРЕДМЕТЫ
+                -- ПРЕДМЕТЫ
                 if Config.ESP.Items then
                     for _, item in pairs(currentRooms:GetDescendants()) do
                         if ImportantItems[item.Name] and not self.Objects[item] then
@@ -679,7 +914,7 @@ function ESP:ScanWorkspace()
                     end
                 end
                 
-                -- 4. МОНСТРЫ
+                -- МОНСТРЫ
                 if Config.ESP.Entities then
                     local searchAreas = {
                         Workspace,
@@ -697,7 +932,6 @@ function ESP:ScanWorkspace()
                     end
                 end
                 
-                -- Очистка мертвых объектов
                 for instance, espData in pairs(self.Objects) do
                     if not instance or not instance.Parent then
                         self:Remove(instance)
@@ -871,7 +1105,7 @@ local Version = Instance.new("TextLabel")
 Version.Size = UDim2.new(0, 100, 0, 25)
 Version.Position = UDim2.new(1, -110, 0, 40)
 Version.BackgroundTransparency = 1
-Version.Text = "v1.5"
+Version.Text = "v1.6 🔐"
 Version.TextColor3 = Color3.fromRGB(0, 255, 100)
 Version.Font = Enum.Font.GothamBold
 Version.TextSize = 12
@@ -901,7 +1135,6 @@ ESPCounter.TextSize = 11
 ESPCounter.TextXAlignment = Enum.TextXAlignment.Left
 ESPCounter.Parent = Title
 
--- Обновление счетчика
 task.spawn(function()
     while wait(1) do
         local doorCount = 0
@@ -942,7 +1175,7 @@ UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 15)
 end)
 
--- Функции создания элементов
+-- Функции создания элементов (те же что и раньше)
 local function CreateSection(name, icon)
     local Section = Instance.new("Frame")
     Section.Size = UDim2.new(1, 0, 0, 35)
@@ -1037,8 +1270,6 @@ local function CreateToggle(name, icon, callback, default)
     Button.MouseButton1Click:Connect(function()
         state = not state
         
-        local TweenService = game:GetService("TweenService")
-        
         TweenService:Create(Toggle, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
             BackgroundColor3 = state and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(60, 60, 80)
         }):Play()
@@ -1132,7 +1363,7 @@ local function CreateSlider(name, icon, min, max, default, callback)
         local pos = math.clamp((input.Position.X - SliderBG.AbsolutePosition.X) / SliderBG.AbsoluteSize.X, 0, 1)
         local value = math.floor(min + (max - min) * pos)
         
-        game:GetService("TweenService"):Create(Fill, TweenInfo.new(0.1), {
+        TweenService:Create(Fill, TweenInfo.new(0.1), {
             Size = UDim2.new(pos, 0, 1, 0)
         }):Play()
         
@@ -1210,7 +1441,6 @@ local function CreateButton(name, icon, callback)
     Button.MouseButton1Click:Connect(function()
         pcall(callback)
         
-        local TweenService = game:GetService("TweenService")
         TweenService:Create(ButtonFrame, TweenInfo.new(0.1), {
             BackgroundColor3 = Color3.fromRGB(45, 45, 60)
         }):Play()
@@ -1356,7 +1586,7 @@ local minimized = false
 MinButton.MouseButton1Click:Connect(function()
     minimized = not minimized
     
-    game:GetService("TweenService"):Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+    TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
         Size = minimized and UDim2.new(0, 450, 0, 70) or UDim2.new(0, 450, 0, 670)
     }):Play()
     
@@ -1431,21 +1661,17 @@ if Config.Speed.Enabled then
     SpeedSystem:Enable()
 end
 
--- Уведомление
+-- Финальное уведомление
 game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "🎯 DOORS HUB v1.5";
-    Text = DrawingSupported and "✅ ТРЕКЕРЫ РАБОТАЮТ!" or "❌ Трекеры недоступны";
+    Title = "🎯 DOORS HUB v1.6";
+    Text = "✅ Загружен успешно! INSERT = Меню";
     Duration = 5;
 })
 
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("✅ DOORS HUB v1.5 - ТРЕКЕРЫ ИСПРАВЛЕНЫ")
-if DrawingSupported then
-    print("📍 Drawing API загружен - трекеры работают!")
-else
-    print("❌ Drawing API недоступен - трекеры отключены")
-end
-print("🚪 Оптимизация дверей активна")
-print("⚡ Все функции работают")
+print("✅ DOORS HUB v1.6 - ПОЛНОСТЬЮ ЗАГРУЖЕН")
+print("🔐 Ключ: Lernix")
+print("📍 Трекеры работают!")
+print("🚪 Оптимизация активна")
 print("🎮 INSERT - открыть/закрыть меню")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
